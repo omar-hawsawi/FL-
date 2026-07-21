@@ -1,2 +1,3 @@
-torch
-torchvision
+torch table
+torchvision table 
+os table

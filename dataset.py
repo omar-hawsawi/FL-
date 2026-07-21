@@ -22,7 +22,7 @@ def load_mnist(data_dir="./data"):
     return train_dataset, test_loader
 
 
-def split_clients(train_dataset, num_clients=3, seed=42):
+def split_clients(train_dataset, num_clients=3, seed=1):
     """IID split: shuffle once, partition into equal contiguous chunks."""
     n = len(train_dataset)
     generator = torch.Generator().manual_seed(seed)
@@ -35,3 +35,4 @@ def split_clients(train_dataset, num_clients=3, seed=42):
         end = (i + 1) * shard_size if i < num_clients - 1 else n
         client_datasets.append(Subset(train_dataset, indices[start:end]))
     return client_datasets
+

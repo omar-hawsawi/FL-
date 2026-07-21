@@ -4,12 +4,20 @@ from client import Client
 from dataset import load_mnist, split_clients
 from model import NeuralNetwork
 from server import Server
+import os
 
-ROUNDS = 5
-LOCAL_EPOCHS = 1
+
+ROUNDS = 50
+LOCAL_EPOCHS = 10
 BATCH_SIZE = 64
 LR = 0.01
 NUM_CLIENTS = 3
+
+def save_checkpoint(model, filename="global_model.pth"):
+    # Save directly in the current working directory, avoiding folder creation bugs
+    torch.save(model.state_dict(), filename)
+    return filename
+
 
 
 def evaluate(model, test_loader):
@@ -29,6 +37,8 @@ def main():
     client_data = split_clients(train_dataset, num_clients=NUM_CLIENTS)
 
     global_model = NeuralNetwork()
+
+    global_model.load_state_dict(torch.load("global_model.pth"))
     server = Server(global_model)
     clients = [Client(i, client_data[i]) for i in range(NUM_CLIENTS)]
 
@@ -52,8 +62,8 @@ def main():
         acc = evaluate(server.global_model, test_loader)
         print(f"  Test accuracy: {acc:.2f}%")
 
-    print("\nFinished")
-
-
+        #saveing the model at the end
+    saved_path = save_checkpoint(server.global_model, filename="global_model.pth")
+    print(f"\nTraining complete! Global model saved to: {saved_path}")
 if __name__ == "__main__":
     main()

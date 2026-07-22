@@ -38,7 +38,7 @@ def main():
 
     global_model = NeuralNetwork()
 
-    global_model.load_state_dict(torch.load("global_model.pth"))
+    global_model.load_state_dict(torch.load("FL--main/global_model.pth"))
     server = Server(global_model)
     clients = [Client(i, client_data[i]) for i in range(NUM_CLIENTS)]
 

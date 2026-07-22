@@ -2,7 +2,6 @@ import torch
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, transforms
 
-
 def load_mnist(data_dir="./data"):
     """Download MNIST and return train dataset + test DataLoader."""
     transform = transforms.Compose(
@@ -36,4 +35,3 @@ def split_clients(train_dataset, num_clients=3, seed=1):
         client_datasets.append(Subset(train_dataset, indices[start:end]))
     return client_datasets
 
-#add a code that see if the number is odd or even if the number is odd - antel it become even(IID)

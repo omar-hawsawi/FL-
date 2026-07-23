@@ -12,36 +12,16 @@ try:
 except ImportError:  # older torch versions
     from torch.nn.utils.stateless import functional_call
 
-# --------------------------------------------------------------------------
 # Configuration
-# --------------------------------------------------------------------------
-MODEL_PATH = "global_model.pth"          # path to the saved global model
+MODEL_PATH = "global_model.pth"          # path to the saved parameters.
 LOCAL_LR = 0.01                          # lr the client used for its local step
 NUM_STEPS = 1                            # keep at 1 for the classic DLG assumption
 
-# Plain SGD (no momentum) on purpose, NOT Adam. Adam is adaptive -- it finds
-# the descent direction and then converges in a fast, uneven burst (usually
-# within a few hundred iterations for this tiny MLP), so every checkpoint from
-# 500 onward ends up looking identical (already-solved). Plain SGD moves at a
-# steady, predictable rate proportional to the raw gradient, which is what
-# gives a smooth, visible progression spread across the full 10,000
-# iterations -- matching the classic "Iters=0/10/50/100/500" figure from the
-# DLG paper, just stretched to this script's checkpoint spacing.
-ATTACK_LR = 20                           # attacker's SGD lr (tuned so the walk
-                                          # from noise to the original takes
-                                          # roughly the full 10k-iteration budget)
-# TV (total-variation) regularization smooths the reconstructed image. It's
-# useful for natural photos, but for tiny 28x28 MNIST digits it is actively
-# harmful: the gradient-matching loss here operates on a MUCH smaller scale
-# (~1e-5) than a raw TV term (~hundreds), so even TV_WEIGHT=1e-3 completely
-# dominates the optimization and the image gets pulled toward a smooth blob
-# instead of matching the real gradients -- this was the exact cause of the
-# loss plateauing at ~0.003 with no visible digit forming. Verified empirically:
-#   TV_WEIGHT=1e-3  -> loss stuck ~0.0017,  pixel MSE ~0.09  (garbage)
-#   TV_WEIGHT=0     -> loss ~0.00003,       pixel MSE ~0.00003 (near-perfect)
-# Keep this at 0 (or at most ~1e-7) for MNIST-scale reconstructions.
+
+ATTACK_LR = 20                           
 TV_WEIGHT = 0.0
-SEED = 0                                 # which private sample to attack (index in MNIST)
+SEED = 0                              
+# which private sample to attack (index in MNIST)
 
 # Checkpoints at which we snapshot the reconstruction (grows 500 -> 1500 -> 3000 -> 5000)
 CHECKPOINTS = [500, 2000, 5000, 10000]

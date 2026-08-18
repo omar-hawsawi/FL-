@@ -30,7 +30,16 @@ def split_clients(train_dataset, num_clients=3, seed=1):
     shard_size = n // num_clients
     client_datasets = []
     for i in range(num_clients):
-        start = i * shard_size
+        if num_clients == 1:
+            multiplier = 1
+        elif num_clients == 2:
+            multiplier = 2
+        else: 
+            multiplier = 3
+
+        start = i * shard_size / multiplier
+        start = int(start)
+
         end = (i + 1) * shard_size if i < num_clients - 1 else n
         client_datasets.append(Subset(train_dataset, indices[start:end]))
     return client_datasets

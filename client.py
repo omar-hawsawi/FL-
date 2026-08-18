@@ -1,30 +1,44 @@
-import copy
-
+import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from privacy import clip_and_add_noise
+from model import NeuralNetwork
 
 class Client:
-    """Trains a local copy of the global model on this client's data shard."""
-
     def __init__(self, client_id, dataset):
         self.client_id = client_id
-        self.dataset = dataset
+        self.dataloader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
 
+    # Added use_dp and noise_multiplier to the parameters here:
+    def train(self, global_model, local_epochs, batch_size, lr, use_dp=True, noise_multiplier=0.05):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        local_model = NeuralNetwork().to(device)
+        local_model.load_state_dict(global_model.state_dict())
+        local_model.train()
 
-    def train(self, global_model, epochs, batch_size, learning_rate):
-        model = copy.deepcopy(global_model)
-        loader = DataLoader(self.dataset, batch_size=batch_size, shuffle=True)
+        initial_weights = {k: v.clone() for k, v in global_model.state_dict().items()}
+        optimizer = optim.SGD(local_model.parameters(), lr=lr)
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.SGD(model.parameters(), lr=learning_rate)
 
-        model.train()
-        for _ in range(epochs):
-            for x, y in loader:
+        for epoch in range(local_epochs):
+            for x, y in self.dataloader:
+                x, y = x.to(device), y.to(device)
                 optimizer.zero_grad()
-                output = model(x)
+                output = local_model(x)
                 loss = criterion(output, y)
                 loss.backward()
                 optimizer.step()
 
-        return model.state_dict(), len(self.dataset)
+        local_weights = local_model.state_dict()
+
+        # Apply Differential Privacy if enabled
+        if use_dp:
+            local_weights = clip_and_add_noise(
+                local_weights, 
+                initial_weights, 
+                max_grad_norm=1.0, 
+                noise_multiplier=noise_multiplier
+            )
+
+        dataset_size = len(self.dataloader.dataset)
+        return local_weights, dataset_size

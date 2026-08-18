@@ -1,13 +1,13 @@
 import copy
 
-
 class Server:
-    """Holds the global model and aggregates client updates with FedAvg."""
+    """Holds the global model and aggregates client updates."""
 
     def __init__(self, model):
         self.global_model = model
 
     def aggregate(self, client_models, client_sizes):
+        print(" [Server] Aggregating private client updates...")
         global_weights = copy.deepcopy(client_models[0])
         total_samples = sum(client_sizes)
 
